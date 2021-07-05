@@ -1,0 +1,11 @@
+.gallery {
+	display: flex;
+	direction: row;
+	justify-content: center;
+	flex-wrap: wrap;
+	align-items: flext-start;
+}
+
+h1 {
+	font-family: Lato, sans-serif;
+}

@@ -1,0 +1,79 @@
+{ 
+    "imploderConfig": {
+        "entryModule": "ts/src/lithograph.ts",
+        "outFile": "target/lithograph.js",
+        "target": "es2018",
+        "moduleBlacklistRegexp": ["\/test\/.*$"],
+        "profiles": {
+            "test": {
+                "entryModule": "ts/generated/test_main.ts",
+                "entryFunction": "testMain",
+                "moduleBlacklistRegexp": [],
+                "outFile": "target/test.js",
+                "plugins": [
+                    {
+                        "transform": "@nartallax/clamsensor",
+                        "type": "imploder",
+                        "generatedFilePath": "ts/generated/test_main.ts"
+                    }
+                ]
+            }
+        }
+    },
+
+    "exclude": [
+        "target",
+        "js"
+    ],
+
+    "compilerOptions": {
+        "moduleResolution": "Node",
+        "lib": [
+            "dom",
+            "es2018"
+        ],
+
+        "baseUrl": "./ts",
+        "paths": {
+            "*": [
+                "./src/*"
+            ],
+            "test/*": [
+                "./test/*"
+            ]
+        },
+
+        "allowJs": false,
+
+        "noErrorTruncation": true,
+        "downlevelIteration": true,
+        "skipLibCheck": true,
+
+        "noImplicitUseStrict": false,
+        "alwaysStrict": true,
+        "newLine": "lf",
+        "noEmitOnError": true,
+        "pretty": false,
+        "removeComments": true,
+        "sourceMap": false,
+        "charset": "utf8",
+        "declaration": false,
+        "emitBOM": false,
+        "outDir": "js/main",
+        "module": "amd",
+        "target": "es2018",
+
+        "strict": true,
+        "allowUnreachableCode": false,
+        "allowUnusedLabels": false,
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "noStrictGenericChecks": false,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "strictFunctionTypes": true,
+        "strictNullChecks": true
+    }
+}
