@@ -3,7 +3,7 @@
 
 A tool that helps create static and almost-static websites.  
 Lithograph is aimed for some specific development techniques; that is, not everything about website buildingcould be done with this tool, and that's intentional.  
-Lithograph it also aimed for fast start, as Lithograph expects to be restarted frequently when developing. See below for usage cases.  
+Lithograph it also aimed for fast start, as it expects to be restarted frequently when developing. See below for usage cases.  
 
 ## Install
 
@@ -142,9 +142,14 @@ URL-defined dynamic pages are pages urls of which are conforming to some pattern
 		matcher: animalMatcher,
 		render: context => {
 			let {animal} = animalMatcher.matchOrThrow(context.urlPath);
-			return `<html><body>This is page about ${animal}!</body></html>`
+			return `<html><body>
+				This is page about ${animal}!
+				${pageLink({src: "/", content: "back to main page"})}
+			</body></html>`
 		}
 	});
+
+Note that you can use wigdets in page render function as in example below. You don't need to pass context to them, just options.
 
 And you can define pages based on arbitrary rules that does not conform to just that with addPage().  
 You can implement these arbitrary rules with routing handler:  
@@ -215,3 +220,7 @@ Only pages are included in sitemap. By default, dynamic and static pages are inc
 
 By default Lithograph tries to generate each dynamic page at least once when writing to disk if no file is created. It is done to catch generation errors early.  
 For some reason you may not want this; so there is a flag to disable this behaviour.  
+
+## Naming
+
+Lithos - "stone"; graphein - "write"; so, Lithograph is something that writes in something as static and stable as stone.  

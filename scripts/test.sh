@@ -5,7 +5,5 @@ cd ..
 
 rm -rf target
 rm -rf ts/generated
-./node_modules/.bin/imploder --tsconfig tsconfig.json
-cp ./package.json ./target/
-cp ./LICENSE ./target/
-cp ./README.MD ./target/
+./node_modules/.bin/imploder --tsconfig tsconfig.json --profile test
+node target/test.js "$@"
