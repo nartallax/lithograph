@@ -22,7 +22,6 @@ Step-by-step process of site definition is following:
 Content set is basically the definition of the site as a whole.  
 
 	import {Lithograph} from "@nartallax/lithograph";
-	import * as Path from "path";
 
 	let contentSet = Lithograph.createContentSet({
 		domain: "localhost",
