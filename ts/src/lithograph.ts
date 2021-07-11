@@ -141,7 +141,7 @@ export namespace Lithograph {
 	// typings loose here because of typescript
 	export type WidgetCss = { readonly [k in symbol]: string }
 
-	export interface WidgetDefinition<T = {}> {
+	export interface WidgetDefinition<T> {
 		render(context: RenderContext, options: T): string;
 	}
 

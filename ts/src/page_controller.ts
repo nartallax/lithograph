@@ -63,9 +63,13 @@ export class LithographPageController implements LithographContentController {
 		}
 		let anyUrlPath = iteratorFirstResult.value;
 
+		let emptyGenerator = function*(){
+			// intended nothing
+		}
+
 		let pageDef: Lithograph.PageDefinition = {
-			getUrlPathsForSitemap: dynamicDef.excludeFromSitemap? function*(){}: () => matcher,
-			getUrlPathsOfFilesToWrite: dynamicDef.renderToFiles? () => matcher: function*(){},
+			getUrlPathsForSitemap: dynamicDef.excludeFromSitemap? emptyGenerator: () => matcher,
+			getUrlPathsOfFilesToWrite: dynamicDef.renderToFiles? () => matcher: emptyGenerator,
 			matchesUrlPath: urlPath => !!matcher.match(urlPath),
 			render: context => dynamicDef.render(context),
 			generationTestUrlPath: anyUrlPath
@@ -179,7 +183,7 @@ export class LithographPageController implements LithographContentController {
 	}
 
 	describeContentItem(urlPath: string): Lithograph.ContentItemDescription | null {
-		let base = { mime: allKnownMimeTypes.html, urlPath, responseType: "ok" as "ok" }
+		let base = { mime: allKnownMimeTypes.html, urlPath, responseType: "ok" as const }
 
 		const staticPage = this.staticallyRoutedPages.get(urlPath);
 		if(staticPage){
@@ -223,7 +227,7 @@ export class LithographPageController implements LithographContentController {
 		}
 	}
 	
-	async onWriteAllToDisk(){
+	async onWriteAllToDisk(): Promise<void> {
 		await Promise.all(this.allPages.map(async page => {
 			let proms: Promise<void>[] = [];
 			let havePage = false;

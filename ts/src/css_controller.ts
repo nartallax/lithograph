@@ -93,7 +93,7 @@ export class LithographCssController implements LithographContentController {
 	
 	private async formCompletedCss(urlPath: string, filePath: string): Promise<string>{
 		let context = new LithographRenderContext(this.opts.contentSet, urlPath);
-		let fns: {[name: string]: SASSFunction} = {} = {}
+		let fns: {[name: string]: SASSFunction} = {}
 		for(let name in this.sassFunctions){
 			fns[name] = this.sassFunctions[name].bind(context);
 		}

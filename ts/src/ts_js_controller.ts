@@ -26,18 +26,18 @@ export class LithographTsJsController implements LithographContentController {
 	private knownScriptFiles: Set<string> = new Set();
 	private allKnownScripts: Map<string, string | undefined> = new Map();
 
-	addImploderProject(urlPath: string, tsconfigJsonPath: string, profile?: string){
+	addImploderProject(urlPath: string, tsconfigJsonPath: string, profile?: string): void {
 		if(this.knownImploderProjects.has(urlPath)){
 			throw new Error("Imploder project defined twice for url " + urlPath);
 		}
 		this.knownImploderProjects.set(urlPath, {tsconfig: tsconfigJsonPath, profile});
 	}
 
-	addScriptFile(filePath: string){
+	addScriptFile(filePath: string): void {
 		this.knownScriptFiles.add(filePath);
 	}
 
-	addScriptDirectory(dirPath: string){
+	addScriptDirectory(dirPath: string): void {
 		this.knownScriptDirectories.add(dirPath);
 	}
 
@@ -110,7 +110,7 @@ export class LithographTsJsController implements LithographContentController {
 		}
 	}
 
-	async onWriteAllToDisk(){
+	async onWriteAllToDisk(): Promise<void> {
 		await Promise.all([...this.knownImploderProjects.entries()].map(async ([urlPath, proj]) => {
 			let code = await this.getImploderProjectContent(proj);
 			let filePath = this.opts.pathController.urlPathToFilePath(urlPath);

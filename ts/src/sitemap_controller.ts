@@ -1,9 +1,9 @@
 import {allKnownMimeTypes} from "mime";
 import {Lithograph} from "lithograph";
-import {createAsyncWriteStream} from "lithograph_utils";
 import {LithographPageController} from "page_controller";
 import {LithographPathController} from "path_controller";
 import {LithographContentController} from "content_controller";
+import {promises as Fs} from "fs";
 
 export interface LithographSitemapControllerOptions {
 	pathController: LithographPathController;
@@ -47,15 +47,13 @@ export class LithographSitemapController implements LithographContentController 
 		}
 	}
 	
-	async onWriteAllToDisk(){
+	async onWriteAllToDisk(): Promise<void>{
 		if(!this.opts.haveSitemap()){
 			return;
 		}
 
 		let filePath = this.opts.pathController.urlPathToFilePath(sitemapXmlPath);
-		await createAsyncWriteStream(filePath, writer => {
-			writer(this.buildSitemap());
-		});
+		await Fs.writeFile(filePath, this.buildSitemap(), "utf-8");
 	}
 
 }

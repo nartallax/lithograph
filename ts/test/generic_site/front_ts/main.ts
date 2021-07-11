@@ -12,7 +12,7 @@ function waitForInteractive(): Promise<void>{
 	});
 }
 
-export async function main(){
+export async function main(): Promise<void> {
 	console.log("yay i'm working!");	
 	await waitForInteractive();
 	let h1 = document.createElement("h1");

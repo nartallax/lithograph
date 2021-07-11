@@ -29,7 +29,9 @@ export class LithographFileResourceController implements LithographContentContro
 
 		let filePath = this.opts.pathController.urlPathToFilePath(urlPath);
 		let ext = extensionNoDot(filePath);
-		let mime = ext in allKnownMimeTypes? (allKnownMimeTypes as any)[ext] as string: allKnownMimeTypes.bytes;
+		let mime = ext in allKnownMimeTypes
+			? allKnownMimeTypes[ext as keyof(typeof allKnownMimeTypes)] as string
+			: allKnownMimeTypes.bytes;
 
 		return {
 			urlPath,

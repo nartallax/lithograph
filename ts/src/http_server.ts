@@ -48,7 +48,7 @@ export class LithographHttpServer {
 		}
 	}
 
-	async writeContentItem(contentItem: Lithograph.ContentItemDescription, resp: Http.ServerResponse){
+	async writeContentItem(contentItem: Lithograph.ContentItemDescription, resp: Http.ServerResponse): Promise<void> {
 		resp.setHeader("Content-Type", contentItem.mime);
 		if(isFilePathContentItemDescription(contentItem)){
 			await createAsyncReadStream(contentItem.filePath, data => {

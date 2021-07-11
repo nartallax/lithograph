@@ -30,9 +30,12 @@
     "@types/imagemin-webp": "^5.1.1",
     "@types/node": "^15.12.2",
     "@types/sass": "^1.16.1",
+    "@typescript-eslint/eslint-plugin": "^4.28.2",
+    "@typescript-eslint/parser": "^4.28.2",
     "dts-bundle-generator": "^5.9.0",
+    "eslint": "^7.30.0",
     "tslib": "^2.3.0",
-    "typescript": "^4.3.2"
+    "typescript": "^4.3.5"
   },
   "dependencies": {
     "@nartallax/imploder": "^1.1.0",

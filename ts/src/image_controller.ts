@@ -167,7 +167,7 @@ export class LithographImageController implements LithographContentController {
 				quality: losless? 100: 65
 			})]
 		});
-		if(!!result.destinationPath){
+		if(result.destinationPath){
 			// ??????
 			throw new Error("Do something with destination path of " + img.filePath + ": " + result.destinationPath);
 		}
@@ -187,7 +187,7 @@ export class LithographImageController implements LithographContentController {
 		return {
 			...desc,
 			responseType: "ok",
-			mime: (allKnownMimeTypes as any)[desc.format] || allKnownMimeTypes.bytes
+			mime: allKnownMimeTypes[desc.format as keyof(typeof allKnownMimeTypes)] || allKnownMimeTypes.bytes
 		}
 	}
 

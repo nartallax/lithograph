@@ -3,6 +3,7 @@ set -e
 cd `dirname "$0"`
 cd ..
 
+scripts/eslint.sh
 rm -rf target
 rm -rf ts/generated
 ./node_modules/.bin/imploder --tsconfig tsconfig.json

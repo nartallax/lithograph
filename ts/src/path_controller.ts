@@ -7,7 +7,7 @@ export interface LithographPathControllerOptions {
 	getPort(): number | undefined;
 }
 
-const absUrlTestingRegexp = /^(?:[a-z][a-z\d\+\-\.]*:)?\/\//i;
+const absUrlTestingRegexp = /^(?:[a-z][a-z\d+\-.]*:)?\/\//i;
 export class LithographPathController {
 
 	constructor(private readonly opts: LithographPathControllerOptions){}
@@ -77,7 +77,7 @@ export class LithographPathController {
 		return hasPathTerminator;
 	}
 
-	resolveUrlPath(urlPath: string, resolveRelativeFrom: string = "/"): string {
+	resolveUrlPath(urlPath: string, resolveRelativeFrom = "/"): string {
 		if(this.isRelativeUrlPath(urlPath)){
 			urlPath = new URL(urlPath, new URL(resolveRelativeFrom, "http://fakedomain/")).pathname
 		}
@@ -89,7 +89,7 @@ export class LithographPathController {
 		return new URL(this.resolveUrlPath(urlPath, resolveRelativeFrom), this.urlRoot).toString();
 	}
 
-	urlPathToFilePath(urlPath: string, resolveRelativeFrom: string = "/"): string {
+	urlPathToFilePath(urlPath: string, resolveRelativeFrom = "/"): string {
 		urlPath = this.resolveUrlPath(urlPath, resolveRelativeFrom);
 
 		if(urlPath.endsWith("/")){

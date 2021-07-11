@@ -19,7 +19,7 @@ testWithSite("generic site http", async assert => {
 		assert(mainPageHtml).contains('"/animal/cat"');
 		assert(mainPageHtml).contains("\"/img/cat_image.png?h=780194a9\"");
 		assert(mainPageHtml).contains("\"/main.css?h=9f842327\"");
-		assert(mainPageHtml).contains("\"/main.js\?h=2c2d736c\"");
+		assert(mainPageHtml).contains("\"/main.js?h=2c2d736c\"");
 
 		let catPageHtml = await httpGetStr("/animal/cat");
 		assert(catPageHtml).contains("<title>Page about cat</title>");
@@ -87,7 +87,7 @@ testWithSite("generic site files", async assert => {
 		'/animal/dog.html',
 		'/animal/hamster.html',
 		'/errors/404.html',
-  		'/errors/500.html',
+		'/errors/500.html',
 		'/font/Lato.ttf',
 		'/img/cat_image.png',
 		'/index.html',
@@ -105,7 +105,7 @@ testWithSite("generic site files", async assert => {
 });
 
 testWithSite("generic site with bad css + js", async assert => {
-	await assert(createGenericSiteWithBrokenCssJs({jsNotBroken: true})).throws(/expected \"{\"/);
+	await assert(createGenericSiteWithBrokenCssJs({jsNotBroken: true})).throws(/expected "{"/);
 	await assert(createGenericSiteWithBrokenCssJs({cssNotBroken: true})).throws(/^Failed to build Imploder project /);
 });
 
@@ -158,7 +158,7 @@ testWithSite("css validation", async assert => {
 	await contentSet.doneWithWidgets();
 
 	contentSet.addSassItem("/main.css", defaultTestSiteDirectory + "/css/broken_code.scss");
-	await assert(contentSet.doneWithResources()).throws(/expected \"{\"/);
+	await assert(contentSet.doneWithResources()).throws(/expected "{"/);
 })
 
 

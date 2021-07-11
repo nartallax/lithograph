@@ -37,7 +37,7 @@ export class LithographContentSet implements Lithograph.ContentSet {
 		this.opts.rootDirectoryPath = Path.resolve(this.opts.rootDirectoryPath);
 	}
 
-	private readonly widgets: Lithograph.WidgetDefinition[] = [];
+	private readonly widgets: Lithograph.WidgetDefinition<unknown>[] = [];
 	private currentContext: Lithograph.RenderContext | null = null;
 	private getCurrentContext(): Lithograph.RenderContext {
 		if(!this.currentContext){

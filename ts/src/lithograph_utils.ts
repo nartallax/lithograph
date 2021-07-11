@@ -1,48 +1,36 @@
-import {promises as Fs, createReadStream, createWriteStream} from "fs";
+import {promises as Fs, createReadStream} from "fs";
 import * as Path from "path";
 import * as Crypto from "crypto";
 import {Lithograph} from "lithograph";
 
 
-export function getFileDirListRecursive(dirPath: string, destination: {files: string[], dirs: string[]} = {files: [], dirs: []}): Promise<{files: string[], dirs: string[]}>{
-	return new Promise(async (ok, bad) => {
-		try {
-			let entries = await Fs.readdir(dirPath);
-			await Promise.all(entries.map(async entryRaw => {
-				let entryPath = Path.resolve(dirPath, entryRaw);
-				let stats = await Fs.stat(entryPath);
-				if(stats.isDirectory()){
-					destination.dirs.push(entryPath);
-					await getFileDirListRecursive(entryPath, destination)
-				} else {
-					destination.files.push(entryPath);
-				}
-			}))
-			ok(destination);
-		} catch(e){
-			bad(e);
+export async function getFileDirListRecursive(dirPath: string, destination: {files: string[], dirs: string[]} = {files: [], dirs: []}): Promise<{files: string[], dirs: string[]}>{
+	let entries = await Fs.readdir(dirPath);
+	await Promise.all(entries.map(async entryRaw => {
+		let entryPath = Path.resolve(dirPath, entryRaw);
+		let stats = await Fs.stat(entryPath);
+		if(stats.isDirectory()){
+			destination.dirs.push(entryPath);
+			await getFileDirListRecursive(entryPath, destination)
+		} else {
+			destination.files.push(entryPath);
 		}
-	})
+	}))
+	return destination;
 }
 
-export function getFileListRecursive(dirPath: string, destination: string[] = []): Promise<string[]>{
-	return new Promise(async (ok, bad) => {
-		try {
-			let entries = await Fs.readdir(dirPath);
-			await Promise.all(entries.map(async entryRaw => {
-				let entryPath = Path.resolve(dirPath, entryRaw);
-				let stats = await Fs.stat(entryPath);
-				if(stats.isDirectory()){
-					await getFileListRecursive(entryPath, destination)
-				} else {
-					destination.push(entryPath);
-				}
-			}))
-			ok(destination);
-		} catch(e){
-			bad(e);
+export async function getFileListRecursive(dirPath: string, destination: string[] = []): Promise<string[]>{
+	let entries = await Fs.readdir(dirPath);
+	await Promise.all(entries.map(async entryRaw => {
+		let entryPath = Path.resolve(dirPath, entryRaw);
+		let stats = await Fs.stat(entryPath);
+		if(stats.isDirectory()){
+			await getFileListRecursive(entryPath, destination)
+		} else {
+			destination.push(entryPath);
 		}
-	})
+	}))
+	return destination;
 }
 
 export function getFileHash(filePath: string): Promise<string>{
@@ -65,20 +53,6 @@ export function getFileContentHash(bytes: Buffer): string {
 	return hash.digest("hex");
 }
 
-export function createAsyncWriteStream(path: string, withWriter: (writer: Lithograph.Writer) => (void | Promise<void>)): Promise<void> {	
-	return new Promise(async (ok, bad) => {
-		try {
-			let stream = createWriteStream(path);
-			stream.on("finish", ok);
-			stream.on("error", bad);
-			await Promise.resolve(withWriter(part => stream.write(part, "utf8")));
-			stream.end();
-		} catch(e){
-			bad(e);
-		}
-	})
-}
-
 export async function writeFileAndCreateDirs(path: string, data: string | Buffer): Promise<void>{
 	await Fs.mkdir(Path.dirname(path), {recursive: true});
 	if(typeof(data) === "string"){
@@ -89,7 +63,7 @@ export async function writeFileAndCreateDirs(path: string, data: string | Buffer
 }
 
 export function createAsyncReadStream(path: string, onData: (data: string | Buffer) => void): Promise<void> {	
-	return new Promise(async (ok, bad) => {
+	return new Promise((ok, bad) => {
 		try {
 			let stream = createReadStream(path);
 			stream.on("close", ok);
