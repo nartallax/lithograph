@@ -1,6 +1,7 @@
 import {Lithograph} from "lithograph";
 import {defaultTestPort, defaultTestSiteDirectory} from "test/test_utils";
 import {promises as Fs} from "fs";
+import * as SASS from "sass";
 
 function getHashAppendixIfPossible(urlPath: string, context: Lithograph.RenderContext): string {
 	if(!context.hasHashes || !context.isRelativeUrl(urlPath)){
@@ -10,14 +11,16 @@ function getHashAppendixIfPossible(urlPath: string, context: Lithograph.RenderCo
 	return "?h=" + context.getHashOrThrow(urlPath).substr(0, 8)
 }
 
-function addHashesToCssUrls(css: string, context: Lithograph.RenderContext): string {
-	if(!context.hasHashes){
-		return css;
-	}
-
-	return css.replace(/[uU][rR][lL]\s*\([^\)]+\)/g, sourceUrlPart => {
-		let urlStr = sourceUrlPart.replace(/^.*?\(\s*/, "").replace(/\s*\)[^\)]*$/, "");
-		return `url(${urlStr}${getHashAppendixIfPossible(urlStr, context)})`
+function addSassBase(contentSet: Lithograph.ContentSet): void {
+	contentSet.addSassSource(defaultTestSiteDirectory + "/css/");
+	contentSet.addSassFunction("darkMode", () => SASS.types.Boolean.TRUE);
+	contentSet.addSassFunction("appendHash($url)", function(url: SASS.types.SassType){
+		if(!(url instanceof SASS.types.String)){
+			throw new Error("String expected as url, got " + url);
+		}
+		let urlStr = url.getValue();
+		let fullUrl = urlStr + getHashAppendixIfPossible(urlStr, this)
+		return new SASS.types.String(fullUrl);
 	});
 }
 
@@ -30,7 +33,6 @@ export async function createGenericSite(): Promise<Lithograph.ContentSet> {
 		minifyCss: true,
 		minifyHtml: true,
 		useSitemap: true,
-		validateCss: true,
 		validateHtml: true
 	});
 
@@ -94,13 +96,8 @@ export async function createGenericSite(): Promise<Lithograph.ContentSet> {
 
 	await contentSet.doneWithWidgets();
 
-
-
-	contentSet.addCssUrlPath("/main.css", context => {
-		let raw = context.directory(defaultTestSiteDirectory + "/css").join("\n");
-		return addHashesToCssUrls(raw, context);
-	});
-	contentSet.addCssDirectory(defaultTestSiteDirectory + "/css");
+	contentSet.addSassItem("/main.css", defaultTestSiteDirectory + "/css/main.scss");
+	addSassBase(contentSet);
 
 	contentSet.setImageDirectory(defaultTestSiteDirectory + "/root/img");
 	contentSet.setWebpDirectory(defaultTestSiteDirectory + "/root/webp");
@@ -206,9 +203,10 @@ export async function createGenericSiteWithBrokenCssJs(params?: {jsNotBroken?: b
 		await Fs.writeFile(defaultTestSiteDirectory + "/front_ts/main.ts", "THIS IS NOT VALID CODE!", "utf-8");
 	}
 
+	addSassBase(contentSet);
 	if(!params?.cssNotBroken){
-		contentSet.addCssUrlPath("/main.css", () => { throw new Error("THIS SHOULD NOT BE BUILT!"); })
-	}	
+		contentSet.addSassItem("/main.css", defaultTestSiteDirectory + "/css/broken_code.scss");
+	}
 
 	await contentSet.doneWithResources();
 	await contentSet.doneWithPages();

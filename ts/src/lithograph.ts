@@ -1,4 +1,7 @@
 import {LithographContentSet} from "content_set";
+import * as SASS from "sass";
+
+export type SASSFunction = (this: Lithograph.RenderContext, ...args: SASS.types.SassType[]) => SASS.types.SassType | void;
 
 
 export namespace Lithograph {
@@ -14,9 +17,9 @@ export namespace Lithograph {
 
 		doneWithWidgets(): Promise<void>; // end of widget definition stage
 
-		addCssUrlPath(urlPath: string, builder: CssFileBuilder): void;
-		addCssDirectory(filePath: string): void;
-		addCssFile(filePath: string): void;
+		addSassItem(urlPath: string, filePath: string): void;
+		addSassSource(dirOrFilePath: string): void;
+		addSassFunction(name: string, fn: SASSFunction): void;
 
 		addImploderProject(resultingJsUrlPath: string, tsconfigJsonFilePath: string, profile?: string): void;
 		addExternalJsFile(filePath: string): void;
@@ -57,14 +60,7 @@ export namespace Lithograph {
 		host?: string;
 	}
 
-	export type CssFileBuilder = (context: Lithograph.CssBuildingContext) => string;
-
-	export interface CssBuildingContext extends RenderContext {
-		file(filePath: string): string;
-		directory(filePath: string): string[];
-		readonly allKnownFiles: ReadonlyMap<string, string>;
-		readonly urlPath: string;
-	}
+	export type CssFileBuilder = (context: Lithograph.RenderContext) => string;
 
 	export interface ContentSetCommonOptions {
 		rootDirectoryPath: string;
@@ -77,7 +73,6 @@ export namespace Lithograph {
 		validateHtml?: boolean;
 		minifyHtml?: boolean;
 	
-		validateCss?: boolean;
 		minifyCss?: boolean;
 
 		// calculating hash values of static content could take some time, so here's option to disable hashes

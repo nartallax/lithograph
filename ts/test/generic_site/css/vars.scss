@@ -1,0 +1,7 @@
+$bgColor: #eee;
+$fontColor: #222;
+
+@if(darkMode()){
+	$bgColor: #222;
+	$fontColor: #fff;
+}

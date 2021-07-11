@@ -2,7 +2,7 @@ import {LithographContentController} from "content_controller";
 import {LithographCssController} from "css_controller";
 import {LithographFileResourceController} from "file_resource_controller";
 import {LithographImageController} from "image_controller";
-import {Lithograph} from "lithograph";
+import {Lithograph, SASSFunction} from "lithograph";
 import {LithographPageController} from "page_controller";
 import {LithographPathController} from "path_controller";
 import {LithographSitemapController} from "sitemap_controller";
@@ -71,7 +71,6 @@ export class LithographContentSet implements Lithograph.ContentSet {
 
 	readonly cssController = new LithographCssController({
 		minify: () => !!this.opts.minifyCss,
-		validate: () => !!this.opts.validateCss,
 		useHashes: () => !this.opts.noHashes,
 		contentSet: this
 	});
@@ -122,8 +121,7 @@ export class LithographContentSet implements Lithograph.ContentSet {
 	]
 
 	/** Content controllers in order which stage events should be called
-	 * CSS controller must go after file and image resource controllers so hashes are calculated on generation
-	 */
+	 * CSS controller must go after file and image resource controllers so hashes are calculated on generation */
 	private readonly contentControllersStageEventGroups: ReadonlyArray<ReadonlyArray<LithographContentController>> = [
 		[
 			this.tsJsController,
@@ -182,22 +180,22 @@ export class LithographContentSet implements Lithograph.ContentSet {
 		return opts => def.render(this.getCurrentContext(), opts);
 	}
 
-	addCssUrlPath(urlPath: string, builder: Lithograph.CssFileBuilder): void {
+	addSassItem(urlPath: string, filePath: string): void {
 		this.checkStage(StageNumbers.resources);	
 		this.pathController.checkUrlPathIsAbsoluteFilePath(urlPath);
-		this.cssController.addContentItem(urlPath, builder);
+		filePath = this.pathController.resolveFilePath(filePath, true);
+		this.cssController.addSassItem(urlPath, filePath);
 	}
 
-	addCssDirectory(directoryPath: string): void {
-		this.checkStage(StageNumbers.resources);
-		directoryPath = this.pathController.resolveFilePath(directoryPath, true);
-		this.cssController.addDirectory(directoryPath);
+	addSassSource(dirOrFilePath: string): void {
+		this.checkStage(StageNumbers.resources);	
+		dirOrFilePath = this.pathController.resolveFilePath(dirOrFilePath, true);
+		this.cssController.addSassIncludePath(dirOrFilePath);
 	}
 
-	addCssFile(filePath: string): void {
-		this.checkStage(StageNumbers.resources);
-		filePath = this.pathController.resolveFilePath(filePath);
-		this.cssController.addFile(filePath);
+	addSassFunction(name: string, fn: SASSFunction): void {
+		this.checkStage(StageNumbers.resources);	
+		this.cssController.addSassFunction(name, fn);
 	}
 
 	addImploderProject(resultingJsUrlPath: string, tsconfigJsonFilePath: string, profile?: string): void {

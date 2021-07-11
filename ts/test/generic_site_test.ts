@@ -18,7 +18,7 @@ testWithSite("generic site http", async assert => {
 		assert(mainPageHtml).contains("to page about cat");
 		assert(mainPageHtml).contains('"/animal/cat"');
 		assert(mainPageHtml).contains("\"/img/cat_image.png?h=780194a9\"");
-		assert(mainPageHtml).contains("\"/main.css?h=6ca2bcd0\"");
+		assert(mainPageHtml).contains("\"/main.css?h=9f842327\"");
 		assert(mainPageHtml).contains("\"/main.js\?h=2c2d736c\"");
 
 		let catPageHtml = await httpGetStr("/animal/cat");
@@ -105,7 +105,7 @@ testWithSite("generic site files", async assert => {
 });
 
 testWithSite("generic site with bad css + js", async assert => {
-	await assert(createGenericSiteWithBrokenCssJs({jsNotBroken: true})).throws("THIS SHOULD NOT BE BUILT!");
+	await assert(createGenericSiteWithBrokenCssJs({jsNotBroken: true})).throws(/expected \"{\"/);
 	await assert(createGenericSiteWithBrokenCssJs({cssNotBroken: true})).throws(/^Failed to build Imploder project /);
 });
 
@@ -139,10 +139,10 @@ testWithSite("bad input urlpaths", async assert => {
 
 	await contentSet.doneWithWidgets();
 
-	assert(() => contentSet.addCssUrlPath("main.css", () => { throw new Error("nope") }))
+	assert(() => contentSet.addSassItem("main.css", "/tmp/main.scss"))
 		.throws("Absolute url path was expected here, but got main.css")
 
-	assert(() => contentSet.addCssUrlPath("/main.css/", () => { throw new Error("nope") }))
+	assert(() => contentSet.addSassItem("/main.css/", "/tmp/main.scss"))
 		.throws("File url path was expected here, but got /main.css/")
 })
 
@@ -152,14 +152,13 @@ testWithSite("css validation", async assert => {
 		domain: "localhost",
 		preferredProtocol: "http",
 		port: defaultTestPort,
-		rootDirectoryPath: defaultTestSiteDirectory + "/root",
-		validateCss: true
+		rootDirectoryPath: defaultTestSiteDirectory + "/root"
 	});
 
 	await contentSet.doneWithWidgets();
 
-	contentSet.addCssUrlPath("/main.css", () => "THIS IS NOT VALID CSS");
-	await assert(contentSet.doneWithResources()).throws(/CSS minification\/validation failed/);
+	contentSet.addSassItem("/main.css", defaultTestSiteDirectory + "/css/broken_code.scss");
+	await assert(contentSet.doneWithResources()).throws(/expected \"{\"/);
 })
 
 
