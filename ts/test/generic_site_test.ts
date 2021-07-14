@@ -81,7 +81,7 @@ testWithSite("generic site files", async assert => {
 		.map(x => x.substr(rootDirPath.length))
 		.map(x => x.replace(/\\/g, "/"))
 		.sort();
-	
+
 	assert(fileList).equalsTo([
 		'/animal/cat.html',
 		'/animal/dog.html',

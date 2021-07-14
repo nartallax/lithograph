@@ -58,14 +58,27 @@ Resources are something that pages could refer to: images, css, js, fonts...
 
 #### CSS
 
-Css is defined as URL path on which the resource should be available, and render function that returns CSS code of the resource.  
-It is implied that the render function assembles resulting CSS code from parts which resides in files. To point content set to these part files, you can use addCssDirectory() as shown below. Content of CSS files in these directories will be accessible for render function through render context.  
+CSS files are assembled with SASS.  
+To do so, you need to point Lithograph to entrypoint file and maybe add some directories to search other SASS source files in:
 
-	contentSet.addCssUrlPath("/main.css", context => {
-		let raw = context.directory("./site_content/css").join("\n");
-		return addHashesToCssUrls(raw, context);
+	contentSet.addSassItem("/main.css", "./site_content/css/main.scss");
+	contentSet.addSassSource("./site_content/css/");
+
+You can also define functions that will be callable from inside SASS code:
+
+	contentSet.addSassFunction("appendHash($url)", function(url: SASS.types.SassType){
+		if(!(url instanceof SASS.types.String)){
+			throw new Error("String expected as url, got " + url);
+		}
+		let urlStr = url.getValue();
+		let fullUrl = urlStr + getHashQueryParams(urlStr, this)
+		return new SASS.types.String(fullUrl);
 	});
-	contentSet.addCssDirectory("./site_content/css");
+
+Note that functions receive `RenderContext` as `this`.  
+After that you can call the function:
+
+	src: url(appendHash('/font/Lato.ttf')) format("truetype");
 
 #### JS
 
