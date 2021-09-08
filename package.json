@@ -35,7 +35,7 @@
     "dts-bundle-generator": "^5.9.0",
     "eslint": "^7.30.0",
     "tslib": "^2.3.0",
-    "typescript": "^4.3.5"
+    "typescript": "^4.4.2"
   },
   "dependencies": {
     "@nartallax/imploder": "^1.1.0",

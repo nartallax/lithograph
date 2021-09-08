@@ -42,9 +42,20 @@ export class LithographPageController implements LithographContentController {
 				}
 			},
 			generationTestUrlPath: staticDef.urlPath,
-			staticUrlPath: staticDef.urlPath
+			staticUrlPath: staticDef.urlPath,
+			neverMinify: !!staticDef.neverMinify,
+			neverValidate: !!staticDef.neverValidate
 		});
 
+	}
+
+	addPlaintextPage(def: Lithograph.StaticPageDefinition): Lithograph.PageDefinition {
+		def.includeInSitemap = !!def.includeInSitemap;
+		def.generateFile = def.generateFile !== false;
+		def.neverMinify = def.neverMinify !== false;
+		def.neverValidate = def.neverValidate !== false;
+		
+		return this.addStaticPage(def);
 	}
 
 	addUrlDefinedDynamicPage<K extends {[k: string]: string[]}>(dynamicDef: Lithograph.UrlDefinedDynamicPageDefinition<K>): Lithograph.PageDefinition {
@@ -153,7 +164,9 @@ export class LithographPageController implements LithographContentController {
 	private renderPage(urlPath: string, page: Lithograph.PageDefinition): string {
 		return this.opts.doWithContext(urlPath, context => {
 			let result = page.render(context);
-			if(this.opts.minify() || this.opts.validate()){
+			let shouldMinify = this.opts.minify() && !page.neverMinify;
+			let shouldValidate = this.opts.validate() && !page.neverValidate;
+			if(shouldMinify || shouldValidate){
 				let min = HtmlMinifier.minify(result, {
 					collapseBooleanAttributes: true,
 					collapseInlineTagWhitespace: true,
@@ -165,7 +178,7 @@ export class LithographPageController implements LithographContentController {
 					sortClassName: true
 				});
 
-				if(this.opts.minify()){
+				if(shouldMinify){
 					result = min;
 				}
 			}

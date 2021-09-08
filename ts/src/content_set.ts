@@ -251,6 +251,11 @@ export class LithographContentSet implements Lithograph.ContentSet {
 		return this.pageController.addUrlDefinedDynamicPage(page);
 	}
 
+	addPlaintextPage(page: Lithograph.StaticPageDefinition): Lithograph.PageDefinition {
+		this.checkStage(StageNumbers.pages);
+		return this.pageController.addPlaintextPage(page);
+	}
+
 	addPage(page: Lithograph.PageDefinition): Lithograph.PageDefinition {
 		this.checkStage(StageNumbers.pages);
 		return this.pageController.addGenericPage(page);
@@ -287,7 +292,7 @@ export class LithographContentSet implements Lithograph.ContentSet {
 		try {
 			return this.pageController.getServerErrorContent();
 		} catch(e) {
-			console.error("Failed to generate error page: " + e.stack);
+			console.error("Failed to generate error page: " + (e as Error).stack);
 			return this.pageController.getDefaultServerErrorContent();
 		}
 	}

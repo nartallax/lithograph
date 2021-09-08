@@ -37,6 +37,7 @@ export namespace Lithograph {
 		// PageDefinitions here are returned for router to point to
 		addStaticPage(page: StaticPageDefinition): PageDefinition; // included in sitemap and generates a file by default
 		addUrlDefinedDynamicPage<K extends {[k: string]: string[]}>(page: UrlDefinedDynamicPageDefinition<K>): PageDefinition;
+		addPlaintextPage(page: StaticPageDefinition): PageDefinition; // just plaintext file. not included anywhere by default
 		addPage(page: PageDefinition): PageDefinition;
 
 		// used when no file is found
@@ -149,6 +150,8 @@ export namespace Lithograph {
 		render(context: RenderContext): string;
 		includeInSitemap?: boolean;
 		generateFile?: boolean;
+		neverValidate?: boolean;
+		neverMinify?: boolean;
 	}
 
 	/** A definition of page that is not contains any content, but is returned on errors */
@@ -216,7 +219,12 @@ export namespace Lithograph {
 		matchesUrlPath?: (urlPath: string) => boolean;
 		/** This path will be used when testing generation when getUrlPathsOfFilesToWrite returns nothing
 		 * It won't result in file being wrote on disk; it's just a value to pass to page generation engine */
-		generationTestUrlPath?: string;		
+		generationTestUrlPath?: string;
+		/** This page should NEVER go through minification process.
+		 * Use-case is text files like ROBOTS.txt */
+		neverMinify?: boolean;
+		/** Same as neverMinify, but for validation */
+		neverValidate?: boolean;
 	}
 
 	export type ContentItemResponceType = "ok" | "not_found" | "perm_redirect" | "temp_redirect";
