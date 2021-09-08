@@ -29,31 +29,36 @@ function stageNameByNumber(stageNum: number): string {
 	throw new Error("No stage name corresponds to number " + stageNum);
 }
 
-export class LithographContentSet implements Lithograph.ContentSet {
+export class LithographContentSet<PageParams> implements Lithograph.ContentSet<PageParams> {
 	private stage: number = StageNumbers.widgets;
-	private httpServer: LithographHttpServer | null = null;
+	private httpServer: LithographHttpServer<PageParams> | null = null;
 
-	constructor(readonly opts: Lithograph.ContentSetCommonOptions){
+	constructor(readonly opts: Lithograph.ContentSetCommonOptions<PageParams>){
 		this.opts.rootDirectoryPath = Path.resolve(this.opts.rootDirectoryPath);
 	}
 
-	private readonly widgets: Lithograph.WidgetDefinition<unknown>[] = [];
-	private currentContext: Lithograph.RenderContext | null = null;
-	private getCurrentContext(): Lithograph.RenderContext {
+	private readonly widgets: Lithograph.WidgetDefinition<unknown, PageParams>[] = [];
+	private currentContext: Lithograph.RenderContext<PageParams> | null = null;
+	private getCurrentContext(): Lithograph.RenderContext<PageParams> {
 		if(!this.currentContext){
 			throw new Error("Could not render widget outside of page!");
 		}
 		return this.currentContext;
 	}
 
-	private doWithContext<T>(urlPath: string, handler: (context: Lithograph.RenderContext) => T): T {
+	private doWithContext<T>(urlPath: string, pageParams: Partial<PageParams> | undefined, handler: (context: Lithograph.RenderContext<PageParams>) => T): T {
 		this.checkStage(StageNumbers.run);
 
 		if(this.currentContext){
 			throw new Error(`Could not create another context: some context already present (old context is created for ${this.currentContext.urlPath}, new context is requested for ${urlPath})`);
 		}
 
-		this.currentContext = new LithographRenderContext(this, urlPath);
+		let fullPageParams = {
+			...this.opts.defaultPageParams,
+			...(pageParams || {})
+		};
+
+		this.currentContext = new LithographRenderContext(this, fullPageParams, urlPath);
 
 		try {
 			return handler(this.currentContext);
@@ -69,7 +74,7 @@ export class LithographContentSet implements Lithograph.ContentSet {
 		getPort: () => this.opts.port
 	});
 
-	readonly cssController = new LithographCssController({
+	readonly cssController: LithographCssController<PageParams> = new LithographCssController({
 		minify: () => !!this.opts.minifyCss,
 		useHashes: () => !this.opts.noHashes,
 		contentSet: this
@@ -173,7 +178,7 @@ export class LithographContentSet implements Lithograph.ContentSet {
 		return new UrlPathPatternMatcher(def);
 	}
 
-	addWidget<T>(render: (context: Lithograph.RenderContext, options: T) => string): (options: T) => string {
+	addWidget<T>(render: (context: Lithograph.RenderContext<PageParams>, options: T) => string): (options: T) => string {
 		this.checkStage(StageNumbers.widgets);
 		let def = { render };
 		this.widgets.push(def);
@@ -193,7 +198,7 @@ export class LithographContentSet implements Lithograph.ContentSet {
 		this.cssController.addSassIncludePath(dirOrFilePath);
 	}
 
-	addSassFunction(name: string, fn: SASSFunction): void {
+	addSassFunction(name: string, fn: SASSFunction<PageParams>): void {
 		this.checkStage(StageNumbers.resources);	
 		this.cssController.addSassFunction(name, fn);
 	}
@@ -241,37 +246,37 @@ export class LithographContentSet implements Lithograph.ContentSet {
 		this.fileResourceController.addDirectory(directoryPath);
 	}
 
-	addStaticPage(page: Lithograph.StaticPageDefinition): Lithograph.PageDefinition {
+	addStaticPage(page: Lithograph.StaticPageDefinition<PageParams>): Lithograph.PageDefinition<PageParams> {
 		this.checkStage(StageNumbers.pages);
 		return this.pageController.addStaticPage(page);
 	}
 
-	addUrlDefinedDynamicPage<K extends {[k: string]: string[]}>(page: Lithograph.UrlDefinedDynamicPageDefinition<K>): Lithograph.PageDefinition {
+	addUrlDefinedDynamicPage<K extends {[k: string]: string[]}>(page: Lithograph.UrlDefinedDynamicPageDefinition<K, PageParams>): Lithograph.PageDefinition<PageParams> {
 		this.checkStage(StageNumbers.pages);
 		return this.pageController.addUrlDefinedDynamicPage(page);
 	}
 
-	addPlaintextPage(page: Lithograph.StaticPageDefinition): Lithograph.PageDefinition {
+	addPlaintextPage(page: Lithograph.StaticPageDefinition<PageParams>): Lithograph.PageDefinition<PageParams> {
 		this.checkStage(StageNumbers.pages);
 		return this.pageController.addPlaintextPage(page);
 	}
 
-	addPage(page: Lithograph.PageDefinition): Lithograph.PageDefinition {
+	addPage(page: Lithograph.PageDefinition<PageParams>): Lithograph.PageDefinition<PageParams> {
 		this.checkStage(StageNumbers.pages);
 		return this.pageController.addGenericPage(page);
 	}
 
-	setPageRouter(router: Lithograph.PageRouter): void {
+	setPageRouter(router: Lithograph.PageRouter<PageParams>): void {
 		this.checkStage(StageNumbers.pages);
 		return this.terminalRoutingController.setRouter(router);
 	}
 
-	setServerErrorPage(page: Lithograph.AuxiliaryPageDefinition): void {
+	setServerErrorPage(page: Lithograph.AuxiliaryPageDefinition<PageParams>): void {
 		this.checkStage(StageNumbers.pages);
 		this.pageController.setServerErrorPage(page);
 	}
 
-	setFileNotFoundPage(page: Lithograph.AuxiliaryPageDefinition): void {
+	setFileNotFoundPage(page: Lithograph.AuxiliaryPageDefinition<PageParams>): void {
 		this.checkStage(StageNumbers.pages);
 		this.pageController.setFileNotFoundPage(page);
 	}

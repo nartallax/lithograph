@@ -88,7 +88,7 @@ export class LithographImageController implements LithographContentController {
 						return; // webp is old enough, no need to regenerate
 					}
 				} catch(e){
-					if(e.code !== "ENOENT"){ // enoent = no webp file, it's something to expect
+					if((e as Error & {code?: string}).code !== "ENOENT"){ // enoent = no webp file, it's something to expect
 						throw e;
 					}
 				}

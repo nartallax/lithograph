@@ -6,30 +6,31 @@ import * as HtmlMinifier from "html-minifier";
 import {LithographContentController} from "content_controller";
 import {writeFileAndCreateDirs} from "lithograph_utils";
 
-export interface LithographPageControllerOptions {
+export interface LithographPageControllerOptions<PageParams> {
 	minify: () => boolean;
 	validate: () => boolean;
 	doDynamicGenerationTests: () => boolean;
 	pathController: LithographPathController;
-	doWithContext<T>(urlPath: string, handler: (context: Lithograph.RenderContext) => T): T;
+	doWithContext<T>(urlPath: string, pageParams: Partial<PageParams> | undefined, handler: (context: Lithograph.RenderContext<PageParams>) => T): T;
 }
 
 
-export class LithographPageController implements LithographContentController {
+export class LithographPageController<PageParams> implements LithographContentController {
 
-	private readonly allPages: Lithograph.PageDefinition[] = [];
-	private readonly staticallyRoutedPages = new Map<string, Lithograph.PageDefinition>();
-	private readonly dynamicallyRoutedPages: Lithograph.PageDefinition[] = [];
-	private fileNotFoundPage: Lithograph.PageDefinition | null = null;
-	private serverErrorPage: Lithograph.PageDefinition | null = null;
+	private readonly allPages: Lithograph.PageDefinition<PageParams>[] = [];
+	private readonly staticallyRoutedPages = new Map<string, Lithograph.PageDefinition<PageParams>>();
+	private readonly dynamicallyRoutedPages: Lithograph.PageDefinition<PageParams>[] = [];
+	private fileNotFoundPage: Lithograph.PageDefinition<PageParams> | null = null;
+	private serverErrorPage: Lithograph.PageDefinition<PageParams> | null = null;
 
-	constructor(private readonly opts: LithographPageControllerOptions){}
+	constructor(private readonly opts: LithographPageControllerOptions<PageParams>){}
 
-	addStaticPage(staticDef: Lithograph.StaticPageDefinition): Lithograph.PageDefinition {
+	addStaticPage(staticDef: Lithograph.StaticPageDefinition<PageParams>): Lithograph.PageDefinition<PageParams> {
 		staticDef.includeInSitemap = staticDef.includeInSitemap !== false;
 		staticDef.generateFile = staticDef.generateFile !== false;
 
 		return this.addGenericPage({
+			params: staticDef.params,
 			render: staticDef.render,
 			getUrlPathsForSitemap: function*(){
 				if(staticDef.includeInSitemap){
@@ -49,7 +50,7 @@ export class LithographPageController implements LithographContentController {
 
 	}
 
-	addPlaintextPage(def: Lithograph.StaticPageDefinition): Lithograph.PageDefinition {
+	addPlaintextPage(def: Lithograph.StaticPageDefinition<PageParams>): Lithograph.PageDefinition<PageParams> {
 		def.includeInSitemap = !!def.includeInSitemap;
 		def.generateFile = def.generateFile !== false;
 		def.neverMinify = def.neverMinify !== false;
@@ -58,7 +59,7 @@ export class LithographPageController implements LithographContentController {
 		return this.addStaticPage(def);
 	}
 
-	addUrlDefinedDynamicPage<K extends {[k: string]: string[]}>(dynamicDef: Lithograph.UrlDefinedDynamicPageDefinition<K>): Lithograph.PageDefinition {
+	addUrlDefinedDynamicPage<K extends {[k: string]: string[]}>(dynamicDef: Lithograph.UrlDefinedDynamicPageDefinition<K, PageParams>): Lithograph.PageDefinition<PageParams> {
 
 		let matcher: Lithograph.UrlPathPatternMatcher<K>;
 
@@ -78,7 +79,8 @@ export class LithographPageController implements LithographContentController {
 			// intended nothing
 		}
 
-		let pageDef: Lithograph.PageDefinition = {
+		let pageDef: Lithograph.PageDefinition<PageParams> = {
+			params: dynamicDef.params,
 			getUrlPathsForSitemap: dynamicDef.excludeFromSitemap? emptyGenerator: () => matcher,
 			getUrlPathsOfFilesToWrite: dynamicDef.renderToFiles? () => matcher: emptyGenerator,
 			matchesUrlPath: urlPath => !!matcher.match(urlPath),
@@ -89,7 +91,7 @@ export class LithographPageController implements LithographContentController {
 		return this.addGenericPage(pageDef);
 	}
 
-	addGenericPage(def: Lithograph.PageDefinition): Lithograph.PageDefinition {
+	addGenericPage(def: Lithograph.PageDefinition<PageParams>): Lithograph.PageDefinition<PageParams> {
 		if(def.staticUrlPath){
 			this.opts.pathController.checkUrlPathIsAbsolute(def.staticUrlPath);
 		}
@@ -115,7 +117,7 @@ export class LithographPageController implements LithographContentController {
 		return !!descr && descr.responseType === "ok";
 	}
 
-	private genericPageDefFromAuxPageDef(page: Lithograph.AuxiliaryPageDefinition): Lithograph.PageDefinition {
+	private genericPageDefFromAuxPageDef(page: Lithograph.AuxiliaryPageDefinition<PageParams>): Lithograph.PageDefinition<PageParams> {
 		if((page.includeInSitemap || page.generateFile) && !page.urlPath){
 			throw new Error("Page requested sitemap/file generation, but has no url path. Don't know where to generate file or what to include in sitemap.");
 		}
@@ -137,7 +139,7 @@ export class LithographPageController implements LithographContentController {
 		}
 	}
 
-	setFileNotFoundPage(page: Lithograph.AuxiliaryPageDefinition): void {
+	setFileNotFoundPage(page: Lithograph.AuxiliaryPageDefinition<PageParams>): void {
 		if(this.fileNotFoundPage){
 			throw new Error("You cannot set fileNotFound page twice!");
 		}
@@ -145,7 +147,7 @@ export class LithographPageController implements LithographContentController {
 		this.fileNotFoundPage = this.addGenericPage(this.genericPageDefFromAuxPageDef(page));
 	}
 
-	setServerErrorPage(page: Lithograph.AuxiliaryPageDefinition): void {
+	setServerErrorPage(page: Lithograph.AuxiliaryPageDefinition<PageParams>): void {
 		if(this.serverErrorPage){
 			throw new Error("You cannot set serverErrorPage twice!");
 		}
@@ -161,8 +163,8 @@ export class LithographPageController implements LithographContentController {
 		}
 	}
 
-	private renderPage(urlPath: string, page: Lithograph.PageDefinition): string {
-		return this.opts.doWithContext(urlPath, context => {
+	private renderPage(urlPath: string, page: Lithograph.PageDefinition<PageParams>): string {
+		return this.opts.doWithContext(urlPath, page.params, context => {
 			let result = page.render(context);
 			let shouldMinify = this.opts.minify() && !page.neverMinify;
 			let shouldValidate = this.opts.validate() && !page.neverValidate;
@@ -186,7 +188,7 @@ export class LithographPageController implements LithographContentController {
 		});
 	}
 
-	pageToContentItem(urlPath: string, page: Lithograph.PageDefinition): Lithograph.ContentItemDescription {
+	pageToContentItem(urlPath: string, page: Lithograph.PageDefinition<PageParams>): Lithograph.ContentItemDescription {
 		return {
 			mime: allKnownMimeTypes.html, 
 			urlPath, 
@@ -266,6 +268,6 @@ export class LithographPageController implements LithographContentController {
 
 }
 
-function isRawUrlDefinedDynamicPageDefinition<K extends {[k:string]:string[]}>(def: Lithograph.UrlDefinedDynamicPageDefinition<K>): def is Lithograph.RawUrlDefinedDynamicPageDefinition<K>{
-	return !!(def as Lithograph.RawUrlDefinedDynamicPageDefinition<K>).pathPattern;
+function isRawUrlDefinedDynamicPageDefinition<K extends {[k:string]:string[]}, PageParams>(def: Lithograph.UrlDefinedDynamicPageDefinition<K, PageParams>): def is Lithograph.RawUrlDefinedDynamicPageDefinition<K, PageParams>{
+	return !!(def as Lithograph.RawUrlDefinedDynamicPageDefinition<K, PageParams>).pathPattern;
 }

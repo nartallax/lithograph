@@ -131,6 +131,7 @@ testWithSite("generic site without hashes with bad css + js", async assert => {
 
 testWithSite("bad input urlpaths", async assert => {
 	let contentSet = Lithograph.createContentSet({
+		defaultPageParams: {},
 		domain: "localhost",
 		preferredProtocol: "http",
 		port: defaultTestPort,
@@ -149,6 +150,7 @@ testWithSite("bad input urlpaths", async assert => {
 testWithSite("css validation", async assert => {
 
 	let contentSet = Lithograph.createContentSet({
+		defaultPageParams: {},
 		domain: "localhost",
 		preferredProtocol: "http",
 		port: defaultTestPort,
@@ -165,6 +167,7 @@ testWithSite("css validation", async assert => {
 testWithSite("html validation", async assert => {
 
 	let contentSet = Lithograph.createContentSet({
+		defaultPageParams: {},
 		domain: "localhost",
 		preferredProtocol: "http",
 		port: defaultTestPort,
@@ -187,6 +190,7 @@ testWithSite("html validation", async assert => {
 testWithSite("test dynamic writes are disableable", async () => {
 
 	let contentSet = Lithograph.createContentSet({
+		defaultPageParams: {},
 		domain: "localhost",
 		preferredProtocol: "http",
 		port: defaultTestPort,
@@ -205,4 +209,73 @@ testWithSite("test dynamic writes are disableable", async () => {
 
 	await contentSet.doneWithPages();
 	await contentSet.writeAllToDisk();
+})
+
+testWithSite("page params", async assert => {
+
+	let contentSet = Lithograph.createContentSet({
+		defaultPageParams: {lang: "en", lastUpdate: 5},
+		domain: "localhost",
+		preferredProtocol: "http",
+		port: defaultTestPort,
+		rootDirectoryPath: defaultTestSiteDirectory + "/root",
+		noDynamicGenerationTests: true
+	});
+
+	await contentSet.doneWithWidgets();
+	await contentSet.doneWithResources();
+
+	contentSet.addStaticPage({
+		urlPath: "/index.html",
+		params: {lang: "ru"},
+		render: context => JSON.stringify(context.pageParams)
+	});
+
+	await contentSet.doneWithPages();
+	await contentSet.startHttpServer({port: defaultTestPort, host: "localhost"});
+
+	try {
+		let pageResp = await httpGet("/index.html");
+		assert(pageResp.code).equalsTo(200);
+		assert(JSON.parse(pageResp.body.toString("utf-8"))).equalsTo({lang: "ru", lastUpdate: 5})
+	} finally {
+		await contentSet.stopHttpServer();
+	}
+})
+
+testWithSite("plaintext pages", async assert => {
+
+	let contentSet = Lithograph.createContentSet({
+		defaultPageParams: {},
+		domain: "localhost",
+		preferredProtocol: "http",
+		port: defaultTestPort,
+		rootDirectoryPath: defaultTestSiteDirectory + "/root",
+		noDynamicGenerationTests: true
+	});
+
+	await contentSet.doneWithWidgets();
+	await contentSet.doneWithResources();
+
+	let robotsTxtString = 
+`User-Agent: *
+Disallow: /src/*
+Disallow: /api/*
+`
+
+	contentSet.addPlaintextPage({
+		urlPath: "/robots.txt",
+		render: () => robotsTxtString
+	});
+
+	await contentSet.doneWithPages();
+	await contentSet.startHttpServer({port: defaultTestPort, host: "localhost"});
+
+	try {
+		let pageResp = await httpGet("/robots.txt");
+		assert(pageResp.code).equalsTo(200);
+		assert(pageResp.body.toString("utf-8")).equalsTo(robotsTxtString)
+	} finally {
+		await contentSet.stopHttpServer();
+	}
 })

@@ -84,20 +84,20 @@ export function isFilePathContentItemDescription(item: Lithograph.ContentItemDes
 	return !!(item as Lithograph.FilePathContentItemDescription).filePath
 }
 
-export function isNotFound(x: Lithograph.PageRouterResponse): x is Lithograph.RouterResponseNotFound {
+export function isNotFound(x: Lithograph.PageRouterResponse<unknown>): x is Lithograph.RouterResponseNotFound {
 	return !!(x as Lithograph.RouterResponseNotFound).notFound;
 }
 
-export function isPermRedirect(x: Lithograph.PageRouterResponse): x is Lithograph.RouterResponsePermanentRedirect {
+export function isPermRedirect(x: Lithograph.PageRouterResponse<unknown>): x is Lithograph.RouterResponsePermanentRedirect {
 	return !!(x as Lithograph.RouterResponsePermanentRedirect).permanentRedirect;
 }
 
-export function isTempRedirect(x: Lithograph.PageRouterResponse): x is Lithograph.RouterResponseTemporaryRedirect {
+export function isTempRedirect(x: Lithograph.PageRouterResponse<unknown>): x is Lithograph.RouterResponseTemporaryRedirect {
 	return !!(x as Lithograph.RouterResponseTemporaryRedirect).temporaryRedirect;
 }
 
-export function isPageRoutingResult(x: Lithograph.PageRouterResponse): x is Lithograph.RouterResponsePage {
-	return !!(x as Lithograph.RouterResponsePage).page;
+export function isPageRoutingResult<PageParams>(x: Lithograph.PageRouterResponse<PageParams>): x is Lithograph.RouterResponsePage<PageParams> {
+	return !!(x as Lithograph.RouterResponsePage<PageParams>).page;
 }
 
 export function escapeAttributeValue(value: string): string {

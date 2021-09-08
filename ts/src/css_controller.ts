@@ -7,10 +7,10 @@ import {LithographContentController} from "content_controller";
 import {LithographContentSet} from "content_set";
 import {LithographRenderContext} from "render_context";
 
-export interface CssControllerOptions {
+export interface CssControllerOptions<PageParams> {
 	minify: () => boolean;
 	useHashes: () => boolean;
-	contentSet: LithographContentSet;
+	contentSet: LithographContentSet<PageParams>;
 }
 
 interface CssContentItem {
@@ -18,13 +18,13 @@ interface CssContentItem {
 	hash?: string;
 }
 
-export class LithographCssController implements LithographContentController {
+export class LithographCssController<PageParams> implements LithographContentController {
 
 	private sassIncludePaths: string[] = [];
-	private sassFunctions: {[name: string]: SASSFunction} = {};
+	private sassFunctions: {[name: string]: SASSFunction<PageParams>} = {};
 	private contentItems: Map<string, CssContentItem> = new Map();
 	
-	constructor(private readonly opts: CssControllerOptions){}
+	constructor(private readonly opts: CssControllerOptions<PageParams>){}
 	
 	addSassItem(urlPath: string, filePath: string): void {
 		if(this.contentItems.has(urlPath)){
@@ -38,7 +38,7 @@ export class LithographCssController implements LithographContentController {
 		this.sassIncludePaths.push(dirPath);
 	}
 
-	addSassFunction(name: string, fn: SASSFunction): void {
+	addSassFunction(name: string, fn: SASSFunction<PageParams>): void {
 		if(name in this.sassFunctions){
 			throw new Error("Could not register SASS function " + name + " twice.");
 		}
@@ -92,8 +92,8 @@ export class LithographCssController implements LithographContentController {
 	}
 	
 	private async formCompletedCss(urlPath: string, filePath: string): Promise<string>{
-		let context = new LithographRenderContext(this.opts.contentSet, urlPath);
-		let fns: {[name: string]: SASSFunction} = {}
+		let context = new LithographRenderContext<PageParams>(this.opts.contentSet, this.opts.contentSet.opts.defaultPageParams, urlPath);
+		let fns: {[name: string]: SASSFunction<PageParams>} = {}
 		for(let name in this.sassFunctions){
 			fns[name] = this.sassFunctions[name].bind(context);
 		}

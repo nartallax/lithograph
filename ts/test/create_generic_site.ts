@@ -3,7 +3,7 @@ import {defaultTestPort, defaultTestSiteDirectory} from "test/test_utils";
 import {promises as Fs} from "fs";
 import * as SASS from "sass";
 
-function getHashAppendixIfPossible(urlPath: string, context: Lithograph.RenderContext): string {
+function getHashAppendixIfPossible(urlPath: string, context: Lithograph.RenderContext<unknown>): string {
 	if(!context.hasHashes || !context.isRelativeUrl(urlPath)){
 		return "";
 	}
@@ -11,7 +11,7 @@ function getHashAppendixIfPossible(urlPath: string, context: Lithograph.RenderCo
 	return "?h=" + context.getHashOrThrow(urlPath).substr(0, 8)
 }
 
-function addSassBase(contentSet: Lithograph.ContentSet): void {
+function addSassBase(contentSet: Lithograph.ContentSet<unknown>): void {
 	contentSet.addSassSource(defaultTestSiteDirectory + "/css/");
 	contentSet.addSassFunction("darkMode", () => SASS.types.Boolean.TRUE);
 	contentSet.addSassFunction("appendHash($url)", function(url: SASS.types.SassType){
@@ -26,6 +26,7 @@ function addSassBase(contentSet: Lithograph.ContentSet): void {
 
 export async function createGenericSite(): Promise<Lithograph.ContentSet> {
 	let contentSet = Lithograph.createContentSet({
+		defaultPageParams: {},
 		domain: "localhost",
 		preferredProtocol: "http",
 		port: defaultTestPort,
@@ -187,8 +188,9 @@ export async function createGenericSite(): Promise<Lithograph.ContentSet> {
 }
 
 
-export async function createGenericSiteWithBrokenCssJs(params?: {jsNotBroken?: boolean, cssNotBroken?: boolean}, opts?: Partial<Lithograph.ContentSetCommonOptions>): Promise<Lithograph.ContentSet>{
+export async function createGenericSiteWithBrokenCssJs(params?: {jsNotBroken?: boolean, cssNotBroken?: boolean}, opts?: Partial<Lithograph.ContentSetCommonOptions<Record<string, never>>>): Promise<Lithograph.ContentSet>{
 	let contentSet = Lithograph.createContentSet({
+		defaultPageParams: {},
 		domain: "localhost",
 		preferredProtocol: "http",
 		port: defaultTestPort,

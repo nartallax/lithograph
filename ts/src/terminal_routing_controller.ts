@@ -4,18 +4,18 @@ import {isNotFound, isPageRoutingResult, isPermRedirect, isTempRedirect} from "l
 import {allKnownMimeTypes} from "mime";
 import {LithographPageController} from "page_controller";
 
-export interface LithographRoutingControllerOptions {
-	pageController: LithographPageController;
+export interface LithographRoutingControllerOptions<PageParams> {
+	pageController: LithographPageController<PageParams>;
 }
 
 /** A class that resembles content controller, but never returns a null
  * Meant to be used as terminal content controller, which handles some special cases like redirects or routing smart logic */
-export class LithographTerminalRoutingController implements LithographContentController {
+export class LithographTerminalRoutingController<PageParams> implements LithographContentController {
 
-	private router: Lithograph.PageRouter | null = null;
-	constructor(private readonly opts: LithographRoutingControllerOptions){}
+	private router: Lithograph.PageRouter<PageParams> | null = null;
+	constructor(private readonly opts: LithographRoutingControllerOptions<PageParams>){}
 
-	setRouter(router: Lithograph.PageRouter): void {
+	setRouter(router: Lithograph.PageRouter<PageParams>): void {
 		if(this.router){
 			throw new Error("You cannot set page router twice!");
 		}
@@ -27,7 +27,7 @@ export class LithographTerminalRoutingController implements LithographContentCon
 	}
 
 	describeContentItem(urlPath: string): Lithograph.ContentItemDescription {
-		const resp: Lithograph.PageRouterResponse = !this.router? { notFound: true }: this.router(urlPath);
+		const resp: Lithograph.PageRouterResponse<PageParams> = !this.router? { notFound: true }: this.router(urlPath);
 
 		if(isNotFound(resp)){
 			return {

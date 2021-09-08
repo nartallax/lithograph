@@ -7,7 +7,7 @@ import {promises as Fs} from "fs";
 
 export interface LithographSitemapControllerOptions {
 	pathController: LithographPathController;
-	pageController: LithographPageController;
+	pageController: LithographPageController<unknown>;
 	haveSitemap: () => boolean;
 }
 

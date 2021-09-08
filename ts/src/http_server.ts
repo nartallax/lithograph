@@ -3,17 +3,17 @@ import * as Http from "http";
 import {Lithograph} from "lithograph";
 import {createAsyncReadStream, isFilePathContentItemDescription} from "lithograph_utils";
 
-export interface LithographHttpServerOptions {
-	contentSet: LithographContentSet;
+export interface LithographHttpServerOptions<PageParams> {
+	contentSet: LithographContentSet<PageParams>;
 	port: number;
 	hostname?: string;
 }
 
-export class LithographHttpServer {
+export class LithographHttpServer<PageParams> {
 
 	private readonly server = new Http.Server(this.onRequest.bind(this));
 
-	constructor(private readonly opts: LithographHttpServerOptions){}
+	constructor(private readonly opts: LithographHttpServerOptions<PageParams>){}
 
 	start(): Promise<void> {
 		return new Promise((ok, bad) => {
@@ -44,7 +44,7 @@ export class LithographHttpServer {
 		try {
 			await this.processRequest(req, resp);
 		} catch(e){
-			this.emitErrorAndClose(e, req, resp);
+			this.emitErrorAndClose(e as Error, req, resp);
 		}
 	}
 

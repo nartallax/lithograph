@@ -3,16 +3,14 @@ import {LithographContentSet} from "content_set";
 import {Lithograph} from "lithograph";
 import {escapeAttributeValue} from "lithograph_utils";
 
-export interface LithographRenderContextOptions {
-	contentSet: LithographContentSet;
-	urlPath: string;
-}
 
-export class LithographRenderContext implements Lithograph.RenderContext {
+export class LithographRenderContext<PageParams> implements Lithograph.RenderContext<PageParams> {
 
-	private readonly opts: Lithograph.ContentSetCommonOptions = this.contentSet.opts;
+	private readonly opts: Lithograph.ContentSetCommonOptions<PageParams> = this.contentSet.opts;
 
-	constructor(protected readonly contentSet: LithographContentSet, public readonly urlPath: string){}
+	constructor(protected readonly contentSet: LithographContentSet<PageParams>, 
+		public readonly pageParams: PageParams,
+		public readonly urlPath: string){}
 
 	resolveUrlPath(otherUrlPath: string): string {
 		if(!this.isRelativeUrl(otherUrlPath)){
@@ -63,7 +61,7 @@ export class LithographRenderContext implements Lithograph.RenderContext {
 		return this.contentSet.pathController.urlRoot;
 	}
 
-	get options(): Lithograph.ContentSetCommonOptions {
+	get options(): Lithograph.ContentSetCommonOptions<PageParams> {
 		return this.opts;
 	}
 

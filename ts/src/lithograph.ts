@@ -1,25 +1,25 @@
 import {LithographContentSet} from "content_set";
 import * as SASS from "sass";
 
-export type SASSFunction = (this: Lithograph.RenderContext, ...args: SASS.types.SassType[]) => SASS.types.SassType | void;
+export type SASSFunction<PageParams> = (this: Lithograph.RenderContext<PageParams>, ...args: SASS.types.SassType[]) => SASS.types.SassType | void;
 
 
 export namespace Lithograph {
 
-	export function createContentSet(opts: ContentSetCommonOptions): ContentSet {
-		return new LithographContentSet(opts);
+	export function createContentSet<PageParams extends Record<string, unknown>>(opts: ContentSetCommonOptions<PageParams>): ContentSet<PageParams> {
+		return new LithographContentSet<PageParams>(opts);
 	}
 	
 	// all file-paths are relative to rootdir path
-	export interface ContentSet {
-		addWidget<T>(render: (context: Lithograph.RenderContext, options: T) => string): (options: T) => string;
+	export interface ContentSet<PageParams = unknown> {
+		addWidget<T>(render: (context: Lithograph.RenderContext<PageParams>, options: T) => string): (options: T) => string;
 		createPathPatternMatcher<K extends {[k: string]: string[]}>(def: UrlPatternDefinition<K>): UrlPathPatternMatcher<K>;
 
 		doneWithWidgets(): Promise<void>; // end of widget definition stage
 
 		addSassItem(urlPath: string, filePath: string): void;
 		addSassSource(dirOrFilePath: string): void;
-		addSassFunction(name: string, fn: SASSFunction): void;
+		addSassFunction(name: string, fn: SASSFunction<PageParams>): void;
 
 		addImploderProject(resultingJsUrlPath: string, tsconfigJsonFilePath: string, profile?: string): void;
 		addExternalJsFile(filePath: string): void;
@@ -35,17 +35,17 @@ export namespace Lithograph {
 
 
 		// PageDefinitions here are returned for router to point to
-		addStaticPage(page: StaticPageDefinition): PageDefinition; // included in sitemap and generates a file by default
-		addUrlDefinedDynamicPage<K extends {[k: string]: string[]}>(page: UrlDefinedDynamicPageDefinition<K>): PageDefinition;
-		addPlaintextPage(page: StaticPageDefinition): PageDefinition; // just plaintext file. not included anywhere by default
-		addPage(page: PageDefinition): PageDefinition;
+		addStaticPage(page: StaticPageDefinition<PageParams>): PageDefinition<PageParams>; // included in sitemap and generates a file by default
+		addUrlDefinedDynamicPage<K extends {[k: string]: string[]}>(page: UrlDefinedDynamicPageDefinition<K, PageParams>): PageDefinition<PageParams>;
+		addPlaintextPage(page: StaticPageDefinition<PageParams>): PageDefinition<PageParams>; // just plaintext file. not included anywhere by default
+		addPage(page: PageDefinition<PageParams>): PageDefinition<PageParams>;
 
 		// used when no file is found
-		setPageRouter(router: PageRouter): void;
+		setPageRouter(router: PageRouter<PageParams>): void;
 
 		// error pages are not included in sitemap and are not generating files by default
-		setServerErrorPage(page: AuxiliaryPageDefinition): void; // HTTP 500
-		setFileNotFoundPage(page: AuxiliaryPageDefinition): void; // HTTP 404
+		setServerErrorPage(page: AuxiliaryPageDefinition<PageParams>): void; // HTTP 500
+		setFileNotFoundPage(page: AuxiliaryPageDefinition<PageParams>): void; // HTTP 404
 
 		doneWithPages(): Promise<void>; // end of page definition stage
 
@@ -61,9 +61,8 @@ export namespace Lithograph {
 		host?: string;
 	}
 
-	export type CssFileBuilder = (context: Lithograph.RenderContext) => string;
-
-	export interface ContentSetCommonOptions {
+	export interface ContentSetCommonOptions<PageParams> {
+		defaultPageParams: PageParams;
 		rootDirectoryPath: string;
 		domain: string;
 		port?: number;
@@ -85,18 +84,18 @@ export namespace Lithograph {
 	export type Writer = (part: Buffer | string) => void;
 
 	export interface RouterResponseNotFound { notFound: true }
-	export interface RouterResponsePage { page: PageDefinition }
+	export interface RouterResponsePage<PageParams> { page: PageDefinition<PageParams> }
 	export interface RouterResponsePermanentRedirect { permanentRedirect: string }
 	export interface RouterResponseTemporaryRedirect { temporaryRedirect: string }
 
-	export type PageRouterResponse = RouterResponseNotFound |
-		RouterResponsePage |
+	export type PageRouterResponse<PageParams> = RouterResponseNotFound |
+		RouterResponsePage<PageParams> |
 		RouterResponsePermanentRedirect |
 		RouterResponseTemporaryRedirect
 
-	export type PageRouter = (urlPath: string) => PageRouterResponse;
+	export type PageRouter<PageParams> = (urlPath: string) => PageRouterResponse<PageParams>;
 
-	export interface RenderContext {
+	export interface RenderContext<PageParams> {
 		/** Root url of the site. Contains protocol, domain and so on. */
 		readonly urlRoot: string;
 		/** Path of currently generated content item */
@@ -105,6 +104,9 @@ export namespace Lithograph {
 		readonly hasHashes: boolean;
 		/** Are there separate webp directory defined? */
 		readonly hasWebp: boolean;
+
+		/** Parameters of currently rendered page */
+		readonly pageParams: PageParams;
 
 		urlPointsToPage(urlPath: string): boolean;
 		urlPointsToImage(urlPath: string): boolean;
@@ -128,7 +130,7 @@ export namespace Lithograph {
 		getHash(urlPath: string): string | undefined;
 		getHashOrThrow(urlPath: string): string;
 
-		readonly options: ContentSetCommonOptions;
+		readonly options: ContentSetCommonOptions<PageParams>;
 	}
 
 	export interface ImageInfo {
@@ -142,28 +144,29 @@ export namespace Lithograph {
 	// typings loose here because of typescript
 	export type WidgetCss = { readonly [k in symbol]: string }
 
-	export interface WidgetDefinition<T> {
-		render(context: RenderContext, options: T): string;
+	export interface WidgetDefinition<T, PageParams> {
+		render(context: RenderContext<PageParams>, options: T): string;
 	}
 
-	export interface StaticPageDefinitionBase {
-		render(context: RenderContext): string;
+	export interface StaticPageDefinitionBase<PageParams> {
+		render(context: RenderContext<PageParams>): string;
 		includeInSitemap?: boolean;
 		generateFile?: boolean;
 		neverValidate?: boolean;
 		neverMinify?: boolean;
+		params?: Partial<PageParams>;
 	}
 
 	/** A definition of page that is not contains any content, but is returned on errors */
-	export interface AuxiliaryPageDefinition {
-		render(context: RenderContext): string;
+	export interface AuxiliaryPageDefinition<PageParams> {
+		render(context: RenderContext<PageParams>): string;
 		includeInSitemap?: boolean;
 		generateFile?: boolean;
 		urlPath?: string;
 	}
 	
 	/** Most static page of them all */
-	export interface StaticPageDefinition extends StaticPageDefinitionBase {
+	export interface StaticPageDefinition<PageParams> extends StaticPageDefinitionBase<PageParams> {
 		urlPath: string;
 	}
 
@@ -182,17 +185,19 @@ export namespace Lithograph {
 	 * pathPattern for such urls should be ["/city/", {name: "city"}]
 	 * and valueLists: {city: ["london", "moscow"] }
 	 * You can either pass valueLists and pathPattern, or create matcher explicitly */
-	export type UrlDefinedDynamicPageDefinition<K extends {[k: string]: string[]}> = 
-		RawUrlDefinedDynamicPageDefinition<K> | PreparedUrlDefinedDynamicPageDefinition<K>
+	export type UrlDefinedDynamicPageDefinition<K extends {[k: string]: string[]}, PageParams> = 
+		RawUrlDefinedDynamicPageDefinition<K, PageParams> | PreparedUrlDefinedDynamicPageDefinition<K, PageParams>
 
-	export interface RawUrlDefinedDynamicPageDefinition<K extends {[k: string]: string[]}> extends UrlPatternDefinition<K> {
-		render(context: RenderContext): string;
+	export interface RawUrlDefinedDynamicPageDefinition<K extends {[k: string]: string[]}, PageParams> extends UrlPatternDefinition<K> {
+		params?: Partial<PageParams>;
+		render(context: RenderContext<PageParams>): string;
 		excludeFromSitemap?: boolean;
 		renderToFiles?: boolean;
 	}
 
-	export interface PreparedUrlDefinedDynamicPageDefinition<K extends {[k: string]: string[]}> {
-		render(context: RenderContext): string;
+	export interface PreparedUrlDefinedDynamicPageDefinition<K extends {[k: string]: string[]}, PageParams> {
+		params?: Partial<PageParams>;
+		render(context: RenderContext<PageParams>): string;
 		matcher: UrlPathPatternMatcher<K>;
 		excludeFromSitemap?: boolean;
 		renderToFiles?: boolean;
@@ -205,8 +210,8 @@ export namespace Lithograph {
 	}
 
 	/** Most generic page definition of them all */
-	export interface PageDefinition {
-		render(context: RenderContext): string;
+	export interface PageDefinition<PageParams> {
+		render(context: RenderContext<PageParams>): string;
 		/** Get list of url paths of content items that should result in files being generated on disk */
 		getUrlPathsOfFilesToWrite(): Iterable<string>;
 		/** Get list of url paths of content items that will be present on disk */
@@ -225,6 +230,9 @@ export namespace Lithograph {
 		neverMinify?: boolean;
 		/** Same as neverMinify, but for validation */
 		neverValidate?: boolean;
+
+		/** Some values related to page that will be passed with context when the page is rendered */
+		params?: Partial<PageParams>;
 	}
 
 	export type ContentItemResponceType = "ok" | "not_found" | "perm_redirect" | "temp_redirect";
