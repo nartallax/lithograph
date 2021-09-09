@@ -193,9 +193,15 @@ export class LithographContentSet<PageParams> implements Lithograph.ContentSet<P
 		return result;
 	}
 
-	private widgetBodyToString(body: string | string[] | undefined): string {
+	private widgetBodyToString(body: string | (string | null | undefined)[] | undefined): string {
 		if(Array.isArray(body)){
-			return body.join("\n")
+			let result = "";
+			for(let i = 0; i < body.length; i++){
+				if(body[i]){
+					result += body[i];
+				}
+			}
+			return result;
 		} else {
 			return (body || "") + "";
 		}
@@ -213,11 +219,19 @@ export class LithographContentSet<PageParams> implements Lithograph.ContentSet<P
 
 	addWidgetWithOptionalParams<T extends Record<string, unknown>>(render: Lithograph.WidgetWithOptParamsRenderFn<T, PageParams>): Lithograph.RegisteredWidgetWithOptParams<T> {
 		this.checkStage(StageNumbers.widgets);
-		return (params?: T | string | string[], body?: string | string[]) => {
+		return (params?: T | string | (string | null | undefined)[], body?: string | (string | null | undefined)[]) => {
 			if(typeof(params) === "object" && !Array.isArray(params) && params){
-				return render(this.getCurrentContext(), params as T, this.widgetBodyToString(body as string | string[] | undefined));
+				return render(
+					this.getCurrentContext(), 
+					params as T,
+					this.widgetBodyToString(body as string | (string | null | undefined)[] | undefined)
+				);
 			} else {
-				return render(this.getCurrentContext(), undefined, this.widgetBodyToString(params as string | string[] | undefined));
+				return render(
+					this.getCurrentContext(),
+					undefined,
+					this.widgetBodyToString(params as string | (string | null | undefined)[] | undefined)
+				);
 			}
 			
 		}

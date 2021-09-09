@@ -10,8 +10,8 @@ export namespace Lithograph {
 		return new LithographContentSet<PageParams>(opts);
 	}
 
-	export type RegisteredWidgetWithParams<T> = (parameters: T, body?: string | string[]) => string
-	export type RegisteredWidgetWithoutParams = (body?: string | string[]) => string;
+	export type RegisteredWidgetWithParams<T> = (parameters: T, body?: string | (string | null | undefined)[]) => string
+	export type RegisteredWidgetWithoutParams = (body?: string | (string | null | undefined)[]) => string;
 	export type RegisteredWidgetWithOptParams<T> = RegisteredWidgetWithParams<T> & RegisteredWidgetWithoutParams;
 	export type WidgetWithParamsRenderFn<T, PageParams> = (context: Lithograph.RenderContext<PageParams>, parameters: T, body: string) => string
 	export type WidgetWithoutParamsRenderFn<PageParams> = (context: Lithograph.RenderContext<PageParams>, body: string) => string;
