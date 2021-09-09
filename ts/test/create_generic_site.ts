@@ -37,34 +37,34 @@ export async function createGenericSite(): Promise<Lithograph.ContentSet> {
 		validateHtml: true
 	});
 
-	let h2 = contentSet.addWidget<{text: string}>((_, opts) => {
-		return `<h2>${opts.text}</h2>`
+	let h2 = contentSet.addWidgetWithOptionalParams<{class?: string}>((_, params, body) => {
+		return `<h2${params && params.class? ` class="${params.class}"`: ""}>${body}</h2>`
 	});
 
-	let pageLink = contentSet.addWidget<{ src: string, content: string }>((context, opts) => {
+	let pageLink = contentSet.addWidgetWithParams<{ src: string, content: string }>((context, opts) => {
 		if(context.isRelativeUrl(opts.src) && !context.urlPointsToPage(opts.src)){
 			throw new Error(`Expected url path ${opts.src} to point to page, but it's not.`);
 		}
 		return `<a href="${opts.src}">${opts.content}</a>`
 	})
 
-	let cssFileLink = contentSet.addWidget<string>((context, url) => {
+	let cssFileLink = contentSet.addWidgetWithoutParams((context, url) => {
 		if(context.isRelativeUrl(url) && !context.urlPointsToCssFile(url)){
 			throw new Error(`Expected ${url} to point to CSS file, but it's not.`)
 		}
 		return `<link rel="stylesheet" href="${url}${getHashAppendixIfPossible(url,context)}">`
 	});
 
-	let pageTitle = contentSet.addWidget<string>((_, text) => `<title>${text}</title>`);
+	let pageTitle = contentSet.addWidgetWithoutParams((_, body) => `<title>${body}</title>`);
 
-	let jsFileLink = contentSet.addWidget<string>((context, url) => {
+	let jsFileLink = contentSet.addWidgetWithoutParams((context, url) => {
 		if(context.isRelativeUrl(url) && !context.urlPointsToJsFile(url)){
 			throw new Error(`Expected ${url} to point to JS file, but it's not.`)
 		}
 		return `<script src="${url}${getHashAppendixIfPossible(url,context)}" async></script>`;
 	});
 
-	let image = contentSet.addWidget<{ src: string, alt: string }>((context, opts) => {
+	let image = contentSet.addWidgetWithParams<{ src: string, alt: string }>((context, opts) => {
 		if(!context.urlPointsToImage(opts.src)){
 			throw new Error(`Expected url path ${opts.src} to point to image, but it's not.`);
 		}
@@ -83,7 +83,7 @@ export async function createGenericSite(): Promise<Lithograph.ContentSet> {
 		</picture>`
 	});
 
-	let page = contentSet.addWidget<{ head: string, body: string }>((_, opts) => {
+	let page = contentSet.addWidgetWithParams<{ head: string, body: string }>((_, opts) => {
 		return `<!DOCTYPE html>
 		<html>
 			<head>
@@ -127,7 +127,7 @@ export async function createGenericSite(): Promise<Lithograph.ContentSet> {
 	let mainPage = contentSet.addStaticPage({
 		urlPath: "/",
 		render: () => typicalPage("Main page!", [
-			h2({text: "I am main page!"}),
+			h2("I am main page!"),
 			pageLink({content: "this is google!", src: "https://google.com"}),
 			image({src: "/img/cat_image.png", alt: "oh look a cat"}),
 			valueLists.animal.map(x => pageLink({content: "to page about " + x, src: "/animal/" + x})).join("<br/>")
@@ -148,7 +148,8 @@ export async function createGenericSite(): Promise<Lithograph.ContentSet> {
 		render: context => {
 			let {animal} = animalMatcher.matchOrThrow(context.urlPath);
 			return typicalPage("Page about " + animal, [
-				h2({text: "This is the page about glorious " + animal + "!"}),
+				h2("This is the page about glorious " + animal + "!"),
+				h2({class: "subtext"}, "This is subtext!"),
 				pageLink({ content: "Home", src: "../root"}),
 				pageLink({ content: "CATZ", src: "./cat"})
 			].join("\n"));
@@ -161,7 +162,7 @@ export async function createGenericSite(): Promise<Lithograph.ContentSet> {
 		includeInSitemap: true,
 		urlPath: "/errors/404",
 		render: context => typicalPage("404 T___T", [
-			h2({text: "Nothing is present for path " + context.urlPath })
+			h2("Nothing is present for path " + context.urlPath)
 		].join("\n"))
 	});
 
@@ -169,7 +170,7 @@ export async function createGenericSite(): Promise<Lithograph.ContentSet> {
 		generateFile: true,
 		urlPath: "/errors/500",
 		render: () => typicalPage("500 o_o", [
-			h2({text: "Uh oh, we're in trouble. Something just died." })
+			h2("Uh oh, we're in trouble. Something just died.")
 		].join("\n")) 
 	})
 

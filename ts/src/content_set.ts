@@ -37,7 +37,6 @@ export class LithographContentSet<PageParams> implements Lithograph.ContentSet<P
 		this.opts.rootDirectoryPath = Path.resolve(this.opts.rootDirectoryPath);
 	}
 
-	private readonly widgets: Lithograph.WidgetDefinition<unknown, PageParams>[] = [];
 	private currentContext: Lithograph.RenderContext<PageParams> | null = null;
 	private getCurrentContext(): Lithograph.RenderContext<PageParams> {
 		if(!this.currentContext){
@@ -178,11 +177,50 @@ export class LithographContentSet<PageParams> implements Lithograph.ContentSet<P
 		return new UrlPathPatternMatcher(def);
 	}
 
-	addWidget<T>(render: (context: Lithograph.RenderContext<PageParams>, options: T) => string): (options: T) => string {
+	addWidget<T>(render: Lithograph.WidgetWithParamsRenderFn<T, PageParams> | Lithograph.WidgetWithoutParamsRenderFn<PageParams>): Lithograph.RegisteredWidgetWithParams<T> | Lithograph.RegisteredWidgetWithoutParams {
 		this.checkStage(StageNumbers.widgets);
-		let def = { render };
-		this.widgets.push(def);
-		return opts => def.render(this.getCurrentContext(), opts);
+		let result: Lithograph.RegisteredWidgetWithParams<T> | Lithograph.RegisteredWidgetWithoutParams = (a: unknown, b: unknown) => {
+			if(typeof(a) === "string"){
+				return (render as Lithograph.WidgetWithoutParamsRenderFn<PageParams>)(this.getCurrentContext(), a);
+			} else if(typeof(a) === "object" && Array.isArray(a)) {
+				return (render as Lithograph.WidgetWithoutParamsRenderFn<PageParams>)(this.getCurrentContext(), a.join("\n"));
+			} else {
+				let body = typeof(b) === "object" && Array.isArray(b)? b.join("\n"): (b || "") + "";
+				return (render as Lithograph.WidgetWithParamsRenderFn<T, PageParams>)(this.getCurrentContext(), a as T, body);
+			}
+		};
+
+		return result;
+	}
+
+	private widgetBodyToString(body: string | string[] | undefined): string {
+		if(Array.isArray(body)){
+			return body.join("\n")
+		} else {
+			return (body || "") + "";
+		}
+	}
+
+	addWidgetWithParams<T>(render: Lithograph.WidgetWithParamsRenderFn<T, PageParams>): Lithograph.RegisteredWidgetWithParams<T> {
+		this.checkStage(StageNumbers.widgets);
+		return (params, body) => render(this.getCurrentContext(), params, this.widgetBodyToString(body));
+	}
+
+	addWidgetWithoutParams(render: Lithograph.WidgetWithoutParamsRenderFn<PageParams>): Lithograph.RegisteredWidgetWithoutParams {
+		this.checkStage(StageNumbers.widgets);
+		return (body) => render(this.getCurrentContext(), this.widgetBodyToString(body));
+	}
+
+	addWidgetWithOptionalParams<T extends Record<string, unknown>>(render: Lithograph.WidgetWithOptParamsRenderFn<T, PageParams>): Lithograph.RegisteredWidgetWithOptParams<T> {
+		this.checkStage(StageNumbers.widgets);
+		return (params?: T | string | string[], body?: string | string[]) => {
+			if(typeof(params) === "object" && !Array.isArray(params) && params){
+				return render(this.getCurrentContext(), params as T, this.widgetBodyToString(body as string | string[] | undefined));
+			} else {
+				return render(this.getCurrentContext(), undefined, this.widgetBodyToString(params as string | string[] | undefined));
+			}
+			
+		}
 	}
 
 	addSassItem(urlPath: string, filePath: string): void {

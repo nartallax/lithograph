@@ -9,10 +9,20 @@ export namespace Lithograph {
 	export function createContentSet<PageParams extends Record<string, unknown>>(opts: ContentSetCommonOptions<PageParams>): ContentSet<PageParams> {
 		return new LithographContentSet<PageParams>(opts);
 	}
+
+	export type RegisteredWidgetWithParams<T> = (parameters: T, body?: string | string[]) => string
+	export type RegisteredWidgetWithoutParams = (body?: string | string[]) => string;
+	export type RegisteredWidgetWithOptParams<T> = RegisteredWidgetWithParams<T> & RegisteredWidgetWithoutParams;
+	export type WidgetWithParamsRenderFn<T, PageParams> = (context: Lithograph.RenderContext<PageParams>, parameters: T, body: string) => string
+	export type WidgetWithoutParamsRenderFn<PageParams> = (context: Lithograph.RenderContext<PageParams>, body: string) => string;
+	export type WidgetWithOptParamsRenderFn<T, PageParams> = (context: Lithograph.RenderContext<PageParams>, parameters: T | undefined, body: string) => string
+
 	
 	// all file-paths are relative to rootdir path
 	export interface ContentSet<PageParams = unknown> {
-		addWidget<T>(render: (context: Lithograph.RenderContext<PageParams>, options: T) => string): (options: T) => string;
+		addWidgetWithoutParams(render: WidgetWithoutParamsRenderFn<PageParams>): RegisteredWidgetWithoutParams;
+		addWidgetWithParams<T extends Record<string, unknown>>(render: WidgetWithParamsRenderFn<T, PageParams>): RegisteredWidgetWithParams<T>;
+		addWidgetWithOptionalParams<T extends Record<string, unknown>>(render: WidgetWithOptParamsRenderFn<T, PageParams>): RegisteredWidgetWithOptParams<T>;
 		createPathPatternMatcher<K extends {[k: string]: string[]}>(def: UrlPatternDefinition<K>): UrlPathPatternMatcher<K>;
 
 		doneWithWidgets(): Promise<void>; // end of widget definition stage
