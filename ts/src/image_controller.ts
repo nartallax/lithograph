@@ -78,23 +78,31 @@ export class LithographImageController implements LithographContentController {
 
 			let {filePath: absWebpPath, urlPath: webpUrlPath} = this.resolveWebpPaths(baseImage.filePath, webpDirPath, imageDirPath);
 			promises.push((async () => {
+
+				let bytes: Buffer | null = null
+				let doGenerate = async () => {
+					bytes = await this.buildWebp(baseImage);
+					await writeFileAndCreateDirs(absWebpPath, bytes);
+				}
+
 				try {
 					let [webpStats, baseStats] = await Promise.all([
 						Fs.stat(absWebpPath),
 						Fs.stat(baseImage.filePath),
 					]);
 	
-					if(webpStats.mtimeMs > baseStats.mtimeMs){
-						return; // webp is old enough, no need to regenerate
+					if(webpStats.mtimeMs < baseStats.mtimeMs){
+						// webp too old, let's regenerate it
+						await doGenerate();
 					}
 				} catch(e){
-					if((e as Error & {code?: string}).code !== "ENOENT"){ // enoent = no webp file, it's something to expect
+					if((e as Error & {code?: string}).code !== "ENOENT"){
 						throw e;
+					} else {
+						// no webp - let's generate it
+						await doGenerate();
 					}
 				}
-
-				let bytes = await this.buildWebp(baseImage);
-				await writeFileAndCreateDirs(absWebpPath, bytes);
 				
 				let webpDescr: InternalImageInfo = {
 					height: baseImage.height,
@@ -102,7 +110,7 @@ export class LithographImageController implements LithographContentController {
 					format: "webp",
 					filePath: absWebpPath,
 					urlPath: webpUrlPath,
-					hash: this.opts.useHashes()? getFileContentHash(bytes): undefined
+					hash: this.opts.useHashes()? !bytes? await getFileHash(absWebpPath): getFileContentHash(bytes): undefined
 				}
 
 				this.knownImages.set(webpUrlPath, webpDescr);

@@ -1,6 +1,6 @@
 {
   "name": "@nartallax/lithograph",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Framework for static and almost-static website generation in Typescript.",
   "author": "Nartallax",
   "license": "0BSD",
