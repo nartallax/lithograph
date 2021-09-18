@@ -55,6 +55,7 @@ export class LithographPageController<PageParams> implements LithographContentCo
 		def.generateFile = def.generateFile !== false;
 		def.neverMinify = def.neverMinify !== false;
 		def.neverValidate = def.neverValidate !== false;
+		def.pathHasExtension = !!def.neverValidate;
 		
 		return this.addStaticPage(def);
 	}
@@ -251,7 +252,7 @@ export class LithographPageController<PageParams> implements LithographContentCo
 				let filePath = urlPath;
 				if(filePath.endsWith("/")) {
 					filePath += "index.html"
-				} else if(!filePath.match(/\.html?$/i)){
+				} else if(!filePath.match(/\.html?$/i) && !page.pathHasExtension){
 					filePath += ".html";
 				}
 				filePath = this.opts.pathController.urlPathToFilePath(filePath);

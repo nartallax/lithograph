@@ -164,6 +164,7 @@ export namespace Lithograph {
 		generateFile?: boolean;
 		neverValidate?: boolean;
 		neverMinify?: boolean;
+		pathHasExtension?: boolean;
 		params?: Partial<PageParams>;
 	}
 
@@ -240,6 +241,9 @@ export namespace Lithograph {
 		neverMinify?: boolean;
 		/** Same as neverMinify, but for validation */
 		neverValidate?: boolean;
+		/** If falsy, assume that urlPath of the file does not have extension.
+		 * Will try to append .html to it when rendering. */
+		pathHasExtension?: boolean;
 
 		/** Some values related to page that will be passed with context when the page is rendered */
 		params?: Partial<PageParams>;
