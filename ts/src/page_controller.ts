@@ -45,7 +45,8 @@ export class LithographPageController<PageParams> implements LithographContentCo
 			generationTestUrlPath: staticDef.urlPath,
 			staticUrlPath: staticDef.urlPath,
 			neverMinify: !!staticDef.neverMinify,
-			neverValidate: !!staticDef.neverValidate
+			neverValidate: !!staticDef.neverValidate,
+			pathHasExtension: !!staticDef.pathHasExtension
 		});
 
 	}
