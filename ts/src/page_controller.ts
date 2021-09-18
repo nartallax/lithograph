@@ -55,7 +55,7 @@ export class LithographPageController<PageParams> implements LithographContentCo
 		def.generateFile = def.generateFile !== false;
 		def.neverMinify = def.neverMinify !== false;
 		def.neverValidate = def.neverValidate !== false;
-		def.pathHasExtension = !!def.neverValidate;
+		def.pathHasExtension = def.pathHasExtension !== false;
 		
 		return this.addStaticPage(def);
 	}
