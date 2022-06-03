@@ -24,14 +24,33 @@ async function copyRecursive(from: string, to: string): Promise<void>{
 export const defaultTestSiteDirectory = "/tmp/lithograph_test_site_dir";
 export const defaultTestPort = 8085;
 
+async function fsEntryExists(path: string): Promise<boolean> {
+	try {
+		await Fs.stat(path)
+		return true
+	} catch(e){
+		if((e as Error & {code: string}).code === "ENOENT"){
+			return false
+		} else {
+			throw e
+		}
+	}
+}
+
+async function rmRf(path: string): Promise<void>{
+	if(await fsEntryExists(path)){
+		await Fs.rm(path, {recursive: true})
+	}
+}
+
 export const testWithSite = Clamsensor.ClamsensorTestRunner.createTestDefinerFunction({
 	getAssertor: () => Clamsensor.ClamsensorDefaultAssertor,
 	beforeTest: async () => {
-		await Fs.rmdir(defaultTestSiteDirectory, {recursive: true});
+		await rmRf(defaultTestSiteDirectory);
 		await copyRecursive("./ts/test/generic_site", defaultTestSiteDirectory);
 	},
 	afterTest: async () => {
-		await Fs.rmdir(defaultTestSiteDirectory, {recursive: true});
+		await rmRf(defaultTestSiteDirectory);
 	}
 })
 
